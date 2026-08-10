@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Tracker</title>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#fff; --text:#172033; --muted:#687386;
+  --border:#e3e7ef; --accent:#4f46e5; --green:#16a34a; --red:#dc2626;
+  --yellow:#d97706; --shadow:0 8px 24px rgba(20,30,55,.07);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.container{max-width:1150px;margin:auto;padding:24px}
+header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+h1{margin:0;font-size:28px}.sub{color:var(--muted);margin-top:5px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,.file-label{border:1px solid var(--border);background:var(--card);padding:9px 13px;border-radius:9px;cursor:pointer;font-weight:600;color:var(--text)}
+button.primary{background:var(--accent);color:white;border-color:var(--accent)}
+button.danger{color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:17px;box-shadow:var(--shadow)}
+.stat .label{color:var(--muted);font-size:13px}.stat .value{font-size:25px;font-weight:800;margin-top:5px}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:14px}
+th{font-size:12px;text-transform:uppercase;color:var(--muted)}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.good{background:#dcfce7;color:#166534}.warn{background:#fef3c7;color:#92400e}.bad{background:#fee2e2;color:#991b1b}
+.pill{padding:6px 10px;border-radius:7px;border:0;font-size:12px}.present{background:#dcfce7;color:#166534}.absent{background:#fee2e2;color:#991b1b}.none{background:#eef2f7;color:#596579}
+.schedule{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.day h3{margin:0 0 10px}.class{border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px}
+.time{font-size:12px;color:var(--muted);font-weight:700}.subject{font-weight:700;margin:4px 0}.type{font-size:11px;color:var(--muted)}
+.controls{display:flex;gap:7px;margin-top:8px}
+select,input[type=date]{padding:8px;border:1px solid var(--border);border-radius:8px;background:white}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+footer{margin:25px 0;color:var(--muted);font-size:12px;text-align:center}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.schedule{grid-template-columns:1fr 1fr}}
+@media(max-width:550px){.container{padding:14px}.grid{grid-template-columns:1fr 1fr}.schedule{grid-template-columns:1fr}header{align-items:flex-start;flex-direction:column}th,td{padding:8px 5px}}
+
+/* DIT-inspired identity + motion */
+.logo-wrap{display:flex;align-items:center;gap:13px}
+.dit-mark{width:58px;height:58px;border-radius:16px;background:linear-gradient(145deg,#4f46e5,#7c3aed);display:grid;place-items:center;color:#fff;font-weight:950;font-size:20px;letter-spacing:-1px;box-shadow:0 10px 25px rgba(79,70,229,.28);animation:logoFloat 4s ease-in-out infinite}
+.dit-mark small{display:block;font-size:7px;letter-spacing:1.2px;margin-top:1px;opacity:.9}
+.identity{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:8px}
+.erp{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:800;border:1px solid #dfe3ff}
+.semester{display:inline-flex;align-items:center;padding:5px 9px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:12px;font-weight:700}
+.card{animation:cardIn .45s ease both}
+.stat{transition:transform .2s ease,box-shadow .2s ease}
+.stat:hover{transform:translateY(-4px);box-shadow:0 14px 30px rgba(20,30,55,.11)}
+.tab{transition:all .2s ease}
+.tab:hover{transform:translateY(-1px)}
+button,.file-label{transition:transform .16s ease,box-shadow .16s ease}
+button:hover,.file-label:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(20,30,55,.08)}
+.class{transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.class:hover{transform:translateY(-2px);box-shadow:0 7px 18px rgba(20,30,55,.08);border-color:#cfd5e2}
+.badge{animation:badgePop .35s ease both}
+@keyframes cardIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes badgePop{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes logoFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(-1deg)}}
+@media (prefers-reduced-motion:reduce){
+  *,*:before,*:after{animation:none!important;transition:none!important}
+}
+
+
+/* Premium animated dashboard */
+body{
+  background:
+    radial-gradient(circle at 8% 0%, rgba(99,102,241,.10), transparent 28%),
+    radial-gradient(circle at 92% 8%, rgba(124,58,237,.09), transparent 25%),
+    var(--bg);
+  background-attachment:fixed;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.32) 45%,transparent 55%);
+  transform:translateX(-120%);
+  animation:pageShine 9s ease-in-out infinite;
+}
+header{
+  position:relative;padding:18px 0 22px;
+}
+header:after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+  background:linear-gradient(90deg,transparent,#cfd5ff,transparent);
+}
+h1{
+  font-size:32px;letter-spacing:-1px;
+  animation:titleReveal .7s cubic-bezier(.2,.8,.2,1) both;
+}
+.sub{animation:fadeUp .7s .08s both}
+.identity{animation:fadeUp .7s .16s both}
+.actions{animation:fadeUp .7s .22s both}
+.grid .stat:nth-child(1){animation-delay:.05s}
+.grid .stat:nth-child(2){animation-delay:.10s}
+.grid .stat:nth-child(3){animation-delay:.15s}
+.grid .stat:nth-child(4){animation-delay:.20s}
+.stat{
+  position:relative;overflow:hidden;
+  background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(248,249,255,.96));
+}
+.stat:before{
+  content:"";position:absolute;width:110px;height:110px;border-radius:50%;
+  right:-45px;top:-50px;background:rgba(79,70,229,.06);
+  transition:transform .5s ease;
+}
+.stat:hover:before{transform:scale(1.6)}
+.stat .value{transition:transform .35s ease}
+.stat:hover .value{transform:scale(1.05)}
+.tab{
+  position:relative;overflow:hidden;
+}
+.tab:after{
+  content:"";position:absolute;top:0;left:-110%;width:70%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  transform:skewX(-20deg);
+}
+.tab:hover:after{animation:tabSweep .7s ease}
+.card{
+  backdrop-filter:blur(4px);
+}
+.dit-mark{
+  position:relative;overflow:hidden;
+}
+.dit-mark:after{
+  content:"";position:absolute;inset:-60%;
+  background:linear-gradient(110deg,transparent 40%,rgba(255,255,255,.32) 50%,transparent 60%);
+  transform:translateX(-70%) rotate(15deg);
+  animation:logoShine 5s ease-in-out infinite;
+}
+.progress-ring{
+  display:inline-grid;place-items:center;width:48px;height:48px;border-radius:50%;
+  background:conic-gradient(var(--ring-color,#4f46e5) var(--ring,0deg),#e8ebf2 0);
+  position:relative;margin-right:9px;vertical-align:middle;
+}
+.progress-ring:after{
+  content:"";position:absolute;inset:5px;border-radius:50%;background:var(--card);
+}
+.progress-ring span{position:relative;z-index:1;font-size:10px;font-weight:800}
+.subject-row-enter{animation:rowEnter .35s ease both}
+.mark-flash{animation:markFlash .55s ease}
+.ripple{
+  position:absolute;border-radius:50%;pointer-events:none;
+  background:rgba(255,255,255,.5);transform:scale(0);
+  animation:ripple .55s ease-out forwards;
+}
+@keyframes pageShine{0%,65%{transform:translateX(-120%)}80%,100%{transform:translateX(120%)}}
+@keyframes titleReveal{from{opacity:0;transform:translateY(12px);filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes tabSweep{from{left:-110%}to{left:150%}}
+@keyframes logoShine{0%,65%{transform:translateX(-70%) rotate(15deg)}82%,100%{transform:translateX(70%) rotate(15deg)}}
+@keyframes rowEnter{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes markFlash{0%{box-shadow:0 0 0 0 rgba(79,70,229,.35)}100%{box-shadow:0 0 0 14px rgba(79,70,229,0)}}
+@keyframes ripple{to{transform:scale(4);opacity:0}}
+
+
+/* ===== Premium attendance UI ===== */
+:root{
+  --accent:#5b5cf0;
+  --accent2:#7c3aed;
+  --surface:#ffffff;
+  --surface2:#f8f9ff;
+  --ink:#172033;
+  --muted2:#778198;
+  --line:#e6e9f1;
+}
+.card{
+  border-color:rgba(222,226,238,.9);
+  box-shadow:0 10px 35px rgba(30,38,70,.06);
+}
+section.card{
+  transition:box-shadow .35s ease,transform .35s ease;
+}
+section.card:hover{box-shadow:0 16px 45px rgba(30,38,70,.09)}
+.day .class{
+  position:relative;
+  overflow:hidden;
+  background:linear-gradient(145deg,#fff 0%,#fafbff 100%);
+}
+#dayList > .class{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:16px;
+  margin:10px 0;
+  border-radius:16px;
+}
+#dayList > .class > div:first-child{min-width:108px}
+#dayList > .class .subject{flex:1;font-size:15px}
+#dayList > .class .controls{
+  margin-top:0;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.status-actions{
+  display:flex;
+  gap:7px;
+  background:#f1f3f8;
+  padding:4px;
+  border-radius:12px;
+  border:1px solid #e7eaf1;
+}
+.status-btn{
+  position:relative;
+  border:0;
+  box-shadow:none;
+  padding:8px 12px;
+  border-radius:9px;
+  font-size:12px;
+  background:transparent;
+  color:#697287;
+  min-width:86px;
+  overflow:hidden;
+}
+.status-btn:hover{box-shadow:none;transform:none;background:#fff}
+.status-btn.active.present{
+  background:#e7f9ee;
+  color:#167342;
+  box-shadow:0 2px 7px rgba(22,163,74,.10);
+}
+.status-btn.active.absent{
+  background:#fff0f0;
+  color:#b4232f;
+  box-shadow:0 2px 7px rgba(220,38,38,.10);
+}
+.status-btn.clear{
+  min-width:40px;
+  padding:8px 10px;
+}
+.status-icon{
+  display:inline-grid;place-items:center;
+  width:20px;height:20px;border-radius:50%;
+  margin-right:5px;vertical-align:-6px;
+  font-size:11px;font-weight:900;
+}
+.status-btn.present .status-icon{background:#bff0d0;color:#167342}
+.status-btn.absent .status-icon{background:#ffd2d6;color:#b4232f}
+.status-btn.clear .status-icon{background:#e3e7ef;color:#667085}
+.attendance-status{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-left:auto;
+  padding:7px 11px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+  border:1px solid transparent;
+  transition:all .3s ease;
+}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;
+  box-shadow:0 0 0 4px rgba(148,163,184,.10);
+}
+.is-present{background:#ecfbf2;color:#167342;border-color:#d3f3df}
+.is-present .status-dot{background:#22c55e;box-shadow:0 0 0 4px rgba(34,197,94,.12)}
+.is-absent{background:#fff1f2;color:#b4232f;border-color:#ffe0e3}
+.is-absent .status-dot{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.10)}
+.is-none{background:#f4f5f8;color:#697287;border-color:#e8eaf0}
+.is-none .status-dot{background:#aab2c1}
+.attendance-status.pop{animation:statusPop .42s cubic-bezier(.2,.8,.2,1)}
+.class.completed{border-color:#d9f1e2;background:linear-gradient(145deg,#fff,#f7fcf9)}
+.class.missed{border-color:#f7dfe2;background:linear-gradient(145deg,#fff,#fff8f8)}
+.day-title{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  margin:0 0 13px;
+}
+.day-title .day-count{font-size:12px;color:var(--muted2);font-weight:700}
+.mini-progress{
+  height:4px;border-radius:99px;background:#edf0f5;overflow:hidden;margin-top:7px;
+}
+.mini-progress > span{
+  display:block;height:100%;border-radius:inherit;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transform-origin:left;animation:growBar .8s cubic-bezier(.2,.8,.2,1) both;
+}
+.toast{
+  position:fixed;right:22px;bottom:22px;z-index:1000;
+  min-width:230px;max-width:340px;
+  padding:13px 15px;border-radius:13px;
+  background:rgba(25,31,49,.94);color:white;
+  box-shadow:0 18px 45px rgba(20,25,45,.25);
+  backdrop-filter:blur(12px);
+  display:flex;align-items:center;gap:9px;
+  animation:toastIn .35s cubic-bezier(.2,.8,.2,1);
+}
+.toast.hide{animation:toastOut .3s ease forwards}
+.scroll-top{
+  position:fixed;right:22px;bottom:82px;z-index:900;
+  width:42px;height:42px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(255,255,255,.9);backdrop-filter:blur(12px);
+  box-shadow:0 8px 22px rgba(30,38,70,.12);
+  opacity:0;pointer-events:none;transform:translateY(10px);
+  transition:all .3s ease;
+}
+.scroll-top.show{opacity:1;pointer-events:auto;transform:none}
+@keyframes statusPop{0%{transform:scale(.9);opacity:.5}65%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes growBar{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes toastIn{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(10px) scale(.97)}}
+@media(max-width:700px){
+  #dayList > .class{display:block}
+  #dayList > .class > div:first-child{min-width:0}
+  #dayList > .class .subject{margin:7px 0}
+  .attendance-status{margin:10px 0 0}
+  .status-actions{width:100%}
+  .status-btn{flex:1}
+}
+
+
+/* ===== Cloud Sync / Auth UI ===== */
+.auth-gate{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:20px;background:radial-gradient(circle at 20% 10%,rgba(91,92,240,.18),transparent 35%),radial-gradient(circle at 90% 80%,rgba(124,58,237,.15),transparent 35%),rgba(8,12,25,.72);backdrop-filter:blur(18px)}
+.auth-box{width:min(430px,100%);background:rgba(255,255,255,.96);border:1px solid rgba(255,255,255,.7);border-radius:24px;padding:28px;box-shadow:0 30px 90px rgba(0,0,0,.28);animation:authIn .5s cubic-bezier(.2,.8,.2,1)}
+.auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:22px}.auth-brand .dit-mark{flex:none}
+.auth-box h2{margin:0 0 6px;font-size:25px}.auth-box p{margin:0 0 20px;color:#697287;font-size:14px;line-height:1.5}
+.auth-box label{display:block;font-size:12px;font-weight:800;color:#4b5568;margin:13px 0 6px}
+.auth-box input{width:100%;padding:12px 13px;border:1px solid #dfe3eb;border-radius:11px;outline:none;background:#fff;font-size:14px}
+.auth-box input:focus{border-color:#7c7df5;box-shadow:0 0 0 4px rgba(91,92,240,.10)}
+.auth-submit{width:100%;margin-top:17px;padding:12px;border-radius:11px;border:0;background:linear-gradient(135deg,#5b5cf0,#7c3aed);color:#fff;font-weight:800;cursor:pointer}
+.auth-error{min-height:20px;color:#b4232f;font-size:12px;margin-top:10px}.auth-note{font-size:11px!important;margin-top:15px!important}
+.cloud-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px}
+.cloud-status{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#f1f3f8;color:#697287;border:1px solid #e5e8ef}
+.cloud-status.online{background:#eafaf0;color:#167342;border-color:#d4f2df}.cloud-status.sync{background:#eef2ff;color:#4338ca;border-color:#dfe3ff}.cloud-status.offline{background:#fff5e8;color:#9a5a00;border-color:#ffe5bd}
+.user-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 9px;border-radius:999px;background:#f6f7fa;color:#4f5b70;border:1px solid #e7e9ef;font-size:11px;font-weight:700;max-width:260px}
+.user-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.signout{padding:6px 9px;font-size:11px}
+@keyframes authIn{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+<div class="auth-gate" id="authGate">
+  <div class="auth-box">
+    <div class="auth-brand">
+      <div class="dit-mark">DIT<small>UNIVERSITY</small></div>
+      <div><strong>DIT Attendance Tracker</strong><div style="font-size:11px;color:#778198;margin-top:2px">Cloud Sync</div></div>
+    </div>
+    <h2>Welcome back</h2>
+    <p>Sign in to sync your attendance between your phone and laptop.</p>
+    <label for="authEmail">Email</label>
+    <input id="authEmail" type="email" autocomplete="email" value="akshatanand405@gmail.com" placeholder="you@example.com">
+    <label for="authPassword">Password</label>
+    <input id="authPassword" type="password" autocomplete="current-password" placeholder="Your password">
+    <button class="auth-submit" id="authSubmit" onclick="signIn()">Sign in & Sync</button>
+    <div class="auth-error" id="authError"></div>
+    <p class="auth-note">Your attendance is protected by your Supabase account and row-level security.</p>
+  </div>
+</div>
+
+<div class="container">
+<header>
+  <div class="logo-wrap">
+    <div class="dit-mark" aria-label="DIT University">
+      DIT
+      <small>UNIVERSITY</small>
+    </div>
+    <div>
+      <h1>Attendance Tracker</h1>
+      <div class="sub">DIT University • CSE (AI, ML & Robotics) • 2026–27 Odd Semester</div>
+      <div class="identity">
+        <span class="erp">ERP ID: 1000027235</span>
+        <span class="semester">Personal Attendance Record</span>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <span class="cloud-status" id="cloudStatus"><span>●</span> Connecting…</span>
+    <span class="user-chip" id="userChip" style="display:none">👤 <span id="userEmail"></span></span>
+    <button class="signout" id="signoutBtn" style="display:none" onclick="signOut()">Sign out</button>
+    <button onclick="exportData()">⬇ Export Backup</button>
+    <label class="file-label">⬆ Import Backup<input id="importFile" type="file" accept=".json" hidden onchange="importData(event)"></label>
+    <button class="danger" onclick="resetData()">Reset</button>
+  </div>
+</header>
+
+<div class="grid">
+  <div class="card stat"><div class="label">Overall Attendance</div><div class="value" id="overall">0%</div></div>
+  <div class="card stat"><div class="label">Classes Held</div><div class="value" id="held">0</div></div>
+  <div class="card stat"><div class="label">Present</div><div class="value" id="present">0</div></div>
+  <div class="card stat"><div class="label">Absent</div><div class="value" id="absent">0</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('summary',this)">📊 Summary</button>
+  <button class="tab" onclick="showTab('daily',this)">📝 Mark Attendance</button>
+  <button class="tab" onclick="showTab('timetable',this)">🗓 Timetable</button>
+</div>
+
+<section id="summary" class="card">
+  <h2>Subject Summary</h2>
+  <p class="sub">Target can be changed for each subject.</p>
+  <div style="overflow:auto">
+  <table>
+    <thead><tr><th>Subject</th><th>Held</th><th>Present</th><th>Absent</th><th>Attendance</th><th>Target</th><th>Status</th><th>Can Miss*</th></tr></thead>
+    <tbody id="summaryBody"></tbody>
+  </table>
+  </div>
+  <p class="sub">*Approximate number of additional classes you can miss while staying at or above the selected target.</p>
+</section>
+
+<section id="daily" class="card" style="display:none">
+  <h2>Mark Attendance</h2>
+  <div class="controls" style="margin-bottom:15px">
+    <input type="date" id="datePicker">
+    <button class="primary" onclick="loadDay()">Load Day</button>
+  </div>
+  <div id="dayList"></div>
+</section>
+
+<section id="timetable" class="card" style="display:none">
+  <h2>Weekly Timetable</h2>
+  <div class="schedule" id="schedule"></div>
+</section>
+
+<footer>🔒 Your data stays in this browser using localStorage. Export a backup regularly. <span id="savedAt"></span></footer>
+</div>
+
+<script>
+const subjects = [
+  {id:"de", name:"Digital Electronics & Applications", target:75},
+  {id:"dm", name:"Discrete Mathematics", target:75},
+  {id:"coa", name:"Computer Organization & Architecture", target:75},
+  {id:"java", name:"Introduction to Java Programming", target:75},
+  {id:"javalab", name:"Java Programming Lab", target:75},
+  {id:"dslab", name:"Digital System Design Lab", target:75}
+];
+
+const timetable = {
+  Monday:[
+    ["11:00–11:50","Digital Electronics & Applications","Lecture","de"],
+    ["13:00–13:50","Discrete Mathematics","Lecture","dm"],
+    ["14:00–14:50","Computer Organization & Architecture","Lecture","coa"]
+  ],
+  Tuesday:[
+    ["09:00–09:50","Digital Electronics & Applications","Lecture","de"],
+    ["11:00–11:50","Introduction to Java Programming","Lecture","java"],
+    ["13:00–14:50","Java Programming Lab","Lab","javalab"],
+    ["15:00–15:50","Discrete Mathematics","Lecture","dm"]
+  ],
+  Wednesday:[
+    ["10:00–10:50","Computer Organization & Architecture","Lecture","coa"],
+    ["11:00–11:50","Introduction to Java Programming","Lecture","java"],
+    ["13:00–13:50","Discrete Mathematics","Lecture","dm"]
+  ],
+  Thursday:[
+    ["10:00–10:50","Computer Organization & Architecture","Lecture","coa"],
+    ["11:00–11:50","Digital Electronics & Applications","Lecture","de"],
+    ["13:00–14:50","Digital System Design Lab","Lab","dslab"]
+  ],
+  Friday:[
+    ["11:00–11:50","Introduction to Java Programming","Lecture","java"],
+    ["13:00–13:50","Computer Organization & Architecture","Lecture","coa"],
+    ["14:00–14:50","Discrete Mathematics","Lecture","dm"]
+  ]
+};
+
+
+const SUPABASE_URL = 'https://hmrzxnvxbsfcifgahemk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_pWtImRdbrmKTGALVx2j-uw_fr3UjJxe';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let currentUser = null;
+let cloudReady = false;
+
+function setCloudStatus(type, text){
+  const el=document.getElementById("cloudStatus");
+  if(!el)return;
+  el.className="cloud-status "+(type||"");
+  el.innerHTML="<span>●</span> "+text;
+}
+function setAuthError(msg){const e=document.getElementById("authError");if(e)e.textContent=msg||""}
+async function signIn(){
+  const email=document.getElementById("authEmail").value.trim();
+  const password=document.getElementById("authPassword").value;
+  if(!email||!password){setAuthError("Enter your email and password.");return}
+  const btn=document.getElementById("authSubmit"); btn.disabled=true; btn.textContent="Signing in…"; setAuthError("");
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error){setAuthError(error.message);btn.disabled=false;btn.textContent="Sign in & Sync";return}
+  await onSignedIn(data.user);
+  btn.disabled=false; btn.textContent="Sign in & Sync";
+}
+async function signOut(){
+  await supabaseClient.auth.signOut();
+  currentUser=null; cloudReady=false;
+  document.getElementById("authGate").style.display="grid";
+  document.getElementById("userChip").style.display="none";
+  document.getElementById("signoutBtn").style.display="none";
+  setCloudStatus("offline","Signed out");
+}
+async function onSignedIn(user){
+  currentUser=user;
+  document.getElementById("authGate").style.display="none";
+  document.getElementById("userChip").style.display="inline-flex";
+  document.getElementById("userEmail").textContent=user.email||"Signed in";
+  document.getElementById("signoutBtn").style.display="inline-block";
+  setCloudStatus("sync","Syncing…");
+  await pullCloudAttendance();
+  cloudReady=true;
+  setCloudStatus("online","Cloud synced");
+}
+async function pullCloudAttendance(){
+  if(!currentUser)return;
+  const {data:rows,error}=await supabaseClient.from("attendance")
+    .select("attendance_date,subject_id,status")
+    .eq("user_id",currentUser.id);
+  if(error){setCloudStatus("offline","Cloud error");showToast("Cloud sync failed: "+error.message,"!");return}
+  // Cloud is the source of truth after login. Preserve local records not yet uploaded only if no cloud rows exist.
+  if(rows.length>0 || Object.keys(data.records).length===0){
+    data.records={};
+    rows.forEach(r=>{
+      const key=r.attendance_date+"_"+r.subject_id;
+      data.records[key]={subject:r.subject_id,status:r.status,date:r.attendance_date,day:dayName(r.attendance_date)};
+    });
+    localStorage.setItem("attendanceTracker",JSON.stringify(data));
+    renderSummary(); renderSchedule(); loadDay();
+  } else {
+    await pushLocalAttendance();
+  }
+}
+async function pushLocalAttendance(){
+  if(!currentUser)return;
+  const rows=Object.values(data.records).map(r=>({
+    user_id:currentUser.id,
+    attendance_date:r.date,
+    subject_id:r.subject,
+    status:r.status
+  }));
+  if(!rows.length)return;
+  setCloudStatus("sync","Syncing…");
+  const {error}=await supabaseClient.from("attendance").upsert(rows,{onConflict:"user_id,attendance_date,subject_id"});
+  if(error){setCloudStatus("offline","Sync failed");throw error}
+  setCloudStatus("online","Cloud synced");
+}
+async function syncRecordToCloud(record){
+  if(!currentUser||!cloudReady)return;
+  setCloudStatus("sync","Saving…");
+  const {error}=await supabaseClient.from("attendance").upsert({
+    user_id:currentUser.id,attendance_date:record.date,subject_id:record.subject,status:record.status
+  },{onConflict:"user_id,attendance_date,subject_id"});
+  if(error){setCloudStatus("offline","Save failed");showToast("Cloud save failed: "+(error.message||"check Data API permissions"),"!");return}
+  setCloudStatus("online","Cloud synced");
+}
+async function deleteRecordFromCloud(record){
+  if(!currentUser||!cloudReady)return;
+  setCloudStatus("sync","Saving…");
+  const {error}=await supabaseClient.from("attendance").delete()
+    .eq("user_id",currentUser.id).eq("attendance_date",record.date).eq("subject_id",record.subject);
+  if(error){setCloudStatus("offline","Delete failed");showToast("Cloud delete failed: "+(error.message||"check Data API permissions"),"!");return}
+  setCloudStatus("online","Cloud synced");
+}
+
+let data = JSON.parse(localStorage.getItem("attendanceTracker") || '{"records":{},"targets":{}}');
+subjects.forEach(s=>{if(data.targets[s.id]==null)data.targets[s.id]=s.target});
+
+function save(){localStorage.setItem("attendanceTracker",JSON.stringify(data)); renderSummary(); animateRows(); animateCounters(); const s=document.getElementById("savedAt"); if(s)s.textContent=" • Saved "+new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});}
+function animateCounters(){
+  document.querySelectorAll(".stat .value").forEach(el=>{
+    const target=el.textContent;
+    const m=target.match(/^(\d+(?:\.\d+)?)(.*)$/);
+    if(!m)return;
+    const num=parseFloat(m[1]), suffix=m[2];
+    const start=performance.now(), duration=450;
+    function tick(t){
+      const p=Math.min((t-start)/duration,1);
+      const eased=1-Math.pow(1-p,3);
+      el.textContent=(suffix==="%" ? (num*eased).toFixed(1) : Math.round(num*eased))+suffix;
+      if(p<1)requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+function addRipple(e){
+  const b=e.currentTarget;
+  const r=document.createElement("span"); r.className="ripple";
+  const rect=b.getBoundingClientRect(), size=Math.max(rect.width,rect.height);
+  r.style.width=r.style.height=size+"px";
+  r.style.left=(e.clientX-rect.left-size/2)+"px";
+  r.style.top=(e.clientY-rect.top-size/2)+"px";
+  b.appendChild(r); setTimeout(()=>r.remove(),600);
+}
+function animateRows(){
+  document.querySelectorAll("#summaryBody tr").forEach((row,i)=>{
+    row.classList.remove("subject-row-enter"); void row.offsetWidth;
+    row.style.animationDelay=(i*45)+"ms"; row.classList.add("subject-row-enter");
+  });
+}
+
+
+function recordCount(id){
+  const arr=Object.values(data.records).filter(r=>r.subject===id);
+  const held=arr.length, present=arr.filter(r=>r.status==="P").length;
+  return {held,present,absent:held-present,pct:held?present/held*100:0};
+}
+function canMiss(held,present,target){
+  let n=0;
+  while(held+ n>0 && (present/(held+n))*100>=target) n++;
+  return Math.max(0,n-1);
+}
+function badge(p,t){
+  if(!t)return ["none","No classes"];
+  if(p>=t+5)return ["good","Safe"];
+  if(p>=t)return ["warn","On target"];
+  return ["bad","Below target"];
+}
+function renderSummary(){
+  let totalH=0,totalP=0;
+  const body=document.getElementById("summaryBody"); body.innerHTML="";
+  subjects.forEach(s=>{
+    const c=recordCount(s.id); totalH+=c.held; totalP+=c.present;
+    const target=data.targets[s.id];
+    const [cls,label]=badge(c.pct,target);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td><b>${s.name}</b></td><td>${c.held}</td><td>${c.present}</td><td>${c.absent}</td>
+      <td><span class="progress-ring" style="--ring:${Math.min(c.pct,100)*3.6}deg"><span>${Math.round(c.pct)}%</span></span><b>${c.pct.toFixed(1)}%</b></td>
+      <td><select onchange="setTarget('${s.id}',this.value)">
+        ${[65,70,75,80,85,90,95].map(x=>`<option ${x==target?"selected":""}>${x}</option>`).join("")}
+      </select>%</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+      <td>${canMiss(c.held,c.present,target)}</td>`;
+    body.appendChild(tr);
+  });
+  document.getElementById("held").textContent=totalH;
+  document.getElementById("present").textContent=totalP;
+  document.getElementById("absent").textContent=totalH-totalP;
+  document.getElementById("overall").textContent=(totalH?((totalP/totalH)*100).toFixed(1):"0")+"%";
+}
+function setTarget(id,val){data.targets[id]=Number(val);save()}
+
+function dayName(date){
+  return new Date(date+"T00:00:00").toLocaleDateString("en-US",{weekday:"long"});
+}
+function loadDay(){
+  const date=document.getElementById("datePicker").value;
+  if(!date)return;
+  const day=dayName(date), list=document.getElementById("dayList");
+  const classes=timetable[day]||[];
+  if(!classes.length){list.innerHTML='<div class="empty">No scheduled classes on this day.</div>';return}
+  list.innerHTML=`<h3>${day}, ${new Date(date+"T00:00:00").toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</h3>`;
+  classes.forEach((c,i)=>{
+    const key=date+"_"+c[3]+"_"+i;
+    const existing=data.records[key];
+    const row=document.createElement("div");
+    row.className="class";
+    row.innerHTML=`<div class="time">${c[0]} • ${c[2]}</div><div class="subject">${c[1]}<div class="mini-progress"><span style="width:${recordCount(c[3]).pct}%"></span></div></div>
+      <div class="controls">
+        <div class="status-actions">
+          <button class="status-btn present ${existing?.status==="P"?"active":""}" onclick="mark('${key}','${c[3]}','P','${day}',${i})">
+            <span class="status-icon">✓</span>Present
+          </button>
+          <button class="status-btn absent ${existing?.status==="A"?"active":""}" onclick="mark('${key}','${c[3]}','A','${day}',${i})">
+            <span class="status-icon">×</span>Absent
+          </button>
+          <button class="status-btn clear" title="Clear attendance" onclick="removeMark('${key}')">
+            <span class="status-icon">↺</span>
+          </button>
+        </div>
+        <span class="attendance-status ${existing ? (existing.status==="P" ? "is-present" : "is-absent") : "is-none"}" id="state_${i}">
+  <span class="status-dot"></span>
+  <span class="status-label">${existing ? (existing.status==="P" ? "Present" : "Absent") : "Not marked"}</span>
+</span>
+      </div>`;
+    list.appendChild(row);
+  });
+}
+async function mark(key,subject,status,day,i){
+  const record={subject,status,date:key.split("_")[0],day};
+  data.records[key]=record;
+  save(); loadDay();
+  showToast(status==="P" ? "Attendance marked present" : "Attendance marked absent", status==="P" ? "✓" : "×");
+  await syncRecordToCloud(record);
+}
+async function removeMark(key){
+  const old=data.records[key];
+  delete data.records[key]; save(); loadDay(); showToast("Attendance cleared","↺");
+  if(old) await deleteRecordFromCloud(old);
+}
+
+
+let toastTimer;
+function showToast(message,icon){
+  document.querySelectorAll(".toast").forEach(x=>x.remove());
+  const t=document.createElement("div"); t.className="toast";
+  t.innerHTML=`<strong style="font-size:17px">${icon}</strong><span>${message}</span>`;
+  document.body.appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{t.classList.add("hide");setTimeout(()=>t.remove(),320)},1800);
+}
+function setupScrollTop(){
+  const b=document.createElement("button"); b.className="scroll-top"; b.innerHTML="↑"; b.title="Back to top";
+  b.onclick=()=>window.scrollTo({top:0,behavior:"smooth"});
+  document.body.appendChild(b);
+  window.addEventListener("scroll",()=>b.classList.toggle("show",window.scrollY>300),{passive:true});
+}
+function setupKeyboardShortcuts(){
+  window.addEventListener("keydown",e=>{
+    if(e.target.matches("input,select,textarea"))return;
+    if(e.key.toLowerCase()==="s"){document.querySelector('.tab[onclick*="summary"]')?.click();showToast("Summary opened","S")}
+    if(e.key.toLowerCase()==="m"){document.querySelector('.tab[onclick*="daily"]')?.click();showToast("Mark attendance opened","M")}
+    if(e.key.toLowerCase()==="t"){document.querySelector('.tab[onclick*="timetable"]')?.click();showToast("Timetable opened","T")}
+  });
+}
+function setupIdleGreeting(){
+  const hour=new Date().getHours();
+  const greeting=hour<12?"Good morning":hour<17?"Good afternoon":"Good evening";
+  const sub=document.querySelector(".sub");
+  if(sub && !sub.dataset.greeted){
+    sub.textContent=greeting+" • DIT University • CSE (AI, ML & Robotics) • 2026–27 Odd Semester";
+    sub.dataset.greeted="1";
+  }
+}
+
+function renderSchedule(){
+  const box=document.getElementById("schedule"); box.innerHTML="";
+  Object.entries(timetable).forEach(([day,classes])=>{
+    const d=document.createElement("div"); d.className="day";
+    d.innerHTML=`<h3>${day}</h3>`;
+    classes.forEach(c=>d.innerHTML+=`<div class="class"><div class="time">${c[0]}</div><div class="subject">${c[1]}</div><div class="type">${c[2]}</div></div>`);
+    box.appendChild(d);
+  });
+}
+function showTab(id,btn){
+  document.querySelectorAll("section").forEach(x=>x.style.display="none");
+  document.getElementById(id).style.display="block";
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="attendance-backup.json";a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+function importData(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{try{const x=JSON.parse(reader.result);if(!x.records||!x.targets)throw 0;data=x;save();alert("Backup imported successfully.");}catch{alert("Invalid backup file.");}};
+  reader.readAsText(file);
+}
+function resetData(){
+  if(confirm("Delete ALL attendance records? This cannot be undone unless you have a backup.")){
+    data={records:{},targets:{}};subjects.forEach(s=>data.targets[s.id]=s.target);save();loadDay();
+  }
+}
+const now=new Date();
+document.getElementById("datePicker").value=now.toISOString().slice(0,10);
+renderSummary();renderSchedule();loadDay();
+</script>
+</body>
+</html>
