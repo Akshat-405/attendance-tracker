@@ -6,6 +6,11 @@
 <meta name="theme-color" content="#5b5cf0">
 <meta name="description" content="Personal cloud-synced college attendance tracker">
 <link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Lexend:wght@500;600;700;800&display=swap" rel="stylesheet">
 <title>Attendance Tracker</title>
 <style>
 :root{--bg:#f5f7fb;--card:#fff;--text:#172033;--muted:#718096;--line:#e5e8f0;--accent:#5b5cf0;--accent2:#7c3aed;--green:#16a34a;--red:#dc2626;--amber:#d97706;--shadow:0 12px 35px rgba(26,34,65,.07);--radius:18px}
@@ -159,6 +164,36 @@ body{overflow-x:hidden}
  background:#fff7f7;
 }
 
+
+/* ===== Premium refinement pass ===== */
+:root{--shadow-sm:0 2px 8px rgba(20,30,60,.05);--shadow-md:0 10px 30px rgba(20,30,60,.075);--shadow-lg:0 24px 60px rgba(20,30,60,.13)}
+body{font-feature-settings:"cv11","ss01";-webkit-font-smoothing:antialiased}
+.brand h1,.section-head h2,.modal-head h3,.auth-box h2{font-family:'Lexend',Inter,system-ui,sans-serif}
+.brand h1{font-weight:800;letter-spacing:-1.4px;background:linear-gradient(135deg,var(--text) 35%,var(--accent) 130%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.card{box-shadow:var(--shadow-md);border-color:rgba(120,130,170,.14)}
+.dark .card{border-color:rgba(255,255,255,.06)}
+.card:hover,.summary-calendar-card:hover,.planner-card:hover,.history-card:hover,.timetable-card:hover{box-shadow:var(--shadow-lg)}
+button{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,background .18s ease,border-color .18s ease}
+button.primary{box-shadow:0 10px 24px rgba(91,92,240,.3)}
+button.primary:hover{box-shadow:0 14px 32px rgba(91,92,240,.4)}
+button:active{transform:translateY(0) scale(.97)}
+.stat{border-color:rgba(120,130,170,.14)}
+.stat .value{font-family:'Lexend',Inter,system-ui,sans-serif;letter-spacing:-.6px;font-variant-numeric:tabular-nums}
+.tab{transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s ease,background .25s ease,color .25s ease}
+.status-btn{transition:background .16s ease,color .16s ease}
+.toast{border-radius:15px;padding:11px 12px 11px 13px;gap:10px;align-items:center}
+.toast b{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:50%;background:rgba(255,255,255,.15);font-size:12px;flex-shrink:0}
+.toast-action{margin-left:2px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.24);color:#fff;padding:6px 11px;border-radius:9px;font-size:11px;font-weight:800;white-space:nowrap}
+.toast-action:hover{background:rgba(255,255,255,.28);transform:none;box-shadow:none}
+.undo-row-btn{width:33px;height:33px;border-radius:10px;color:var(--accent);border-color:rgba(91,92,240,.22);background:rgba(91,92,240,.07);flex-shrink:0}
+.undo-row-btn:hover{background:rgba(91,92,240,.14)}
+.undo-last-btn{color:var(--accent);border-color:rgba(91,92,240,.22)}
+.undo-last-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+::selection{background:rgba(91,92,240,.22)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(120,130,170,.28);border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(120,130,170,.44);background-clip:padding-box}
+.auth-box{animation:modalIn .35s cubic-bezier(.2,.8,.2,1)}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -233,7 +268,7 @@ body{overflow-x:hidden}
 </section>
 
 <section id="daily" class="card section">
- <div class="section-head"><div><h2>Mark Attendance</h2><p>Lecture and practical sessions count toward the same subject. <strong>Each class can be marked only once.</strong></p></div><div class="actions-inline"><input type="date" id="datePicker"><button class="primary" onclick="loadDay()">Load Day</button><button type="button" id="resetDataBtn" class="reset-btn" onclick="resetAttendance()">Reset</button></div></div>
+ <div class="section-head"><div><h2>Mark Attendance</h2><p>Lecture and practical sessions count toward the same subject. <strong>Each class can be marked only once.</strong></p></div><div class="actions-inline"><input type="date" id="datePicker"><button type="button" id="undoLastBtn" class="icon-btn undo-last-btn" onclick="undoLast()" title="Undo last attendance mark (shortcut: U)" disabled>↺</button><button type="button" id="resetDataBtn" class="reset-btn" onclick="resetAttendance()">Reset</button></div></div>
  <div id="dayList"></div>
 </section>
 
@@ -287,7 +322,7 @@ function save(render=true){
  if(render)renderAll();
 }
 function setCloudStatus(type,text){const e=document.getElementById('cloudStatus');e.className='cloud '+type;e.textContent='● '+text}
-function showToast(message,icon='✓'){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.innerHTML=`<b>${icon}</b><span>${message}</span>`;document.body.appendChild(t);clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),260)},1900)}
+function showToast(message,icon='✓',actionLabel=null,actionFn=null){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.innerHTML=`<b>${icon}</b><span>${message}</span>`;if(actionLabel&&actionFn){const ab=document.createElement('button');ab.type='button';ab.className='toast-action';ab.textContent=actionLabel;ab.onclick=()=>{actionFn();t.classList.add('hide');setTimeout(()=>t.remove(),260)};t.appendChild(ab)}document.body.appendChild(t);clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.classList.add('hide');setTimeout(()=>t.remove(),260)},actionLabel?4500:1900)}
 function openPlanner(){document.getElementById('plannerModal').classList.add('show');populatePlanner('planSubject');updatePlanner();}
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 function populatePlanner(id){const el=document.getElementById(id);el.innerHTML=subjects.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}
@@ -318,9 +353,24 @@ function renderSummaryCalendar(){
  while(box.children.length%7)box.innerHTML+='<div class="cal-day muted"></div>';
 }
 
-function renderSummary(){let h=0,p=0;const body=document.getElementById('summaryBody');body.innerHTML='';subjects.forEach(s=>{const c=recordCount(s.id),t=Number(data.targets[s.id]||75);h+=c.held;p+=c.present;const [cls,label]=badge(c.pct,t),miss=canMiss(c.held,c.present,t),need=needAttend(c.held,c.present,t);const tr=document.createElement('tr');tr.innerHTML=`<td><div class="subject-name">${s.name}</div><div class="sub" style="font-size:10px">${s.code}</div></td><td>${c.held}</td><td>${c.present}</td><td>${c.absent}</td><td><span class="ring" style="--deg:${Math.min(c.pct,100)*3.6}deg"><b>${Math.round(c.pct)}%</b></span><b>${c.pct.toFixed(1)}%</b><div class="progress"><span style="width:${Math.min(c.pct,100)}%"></span></div></td><td><select onchange="setTarget('${s.id}',this.value)">${[65,70,75,80,85,90,95].map(x=>`<option value="${x}" ${x===t?'selected':''}>${x}</option>`).join('')}</select>%</td><td><span class="badge ${cls}">${label}</span></td><td>${miss}</td><td>${need}</td>`;body.appendChild(tr)});document.getElementById('held').textContent=h;document.getElementById('present').textContent=p;document.getElementById('absent').textContent=h-p;const pct=h?p/h*100:0;document.getElementById('overall').textContent=pct.toFixed(1)+'%';document.getElementById('overallNote').textContent=`Overall target 75% • ${pct>=75?'On target':'Below target'}`;const ranked=subjects.map(s=>({s,c:recordCount(s.id)})).filter(x=>x.c.held).sort((a,b)=>b.c.pct-a.c.pct);document.getElementById('bestNote').textContent=ranked.length?`Best: ${ranked[0].s.name.split(' ')[0]} ${ranked[0].c.pct.toFixed(0)}%`:'—';const risky=subjects.filter(s=>{const c=recordCount(s.id);return c.held&&c.pct<(data.targets[s.id]||75)});document.getElementById('riskNote').textContent=risky.length?`${risky.length} subject${risky.length>1?'s':''} below target`:'No risk alerts';renderSummaryCalendar();renderAlerts()}
+function renderSummary(){let h=0,p=0;const body=document.getElementById('summaryBody');body.innerHTML='';subjects.forEach(s=>{const c=recordCount(s.id),t=Number(data.targets[s.id]||75);h+=c.held;p+=c.present;const [cls,label]=badge(c.pct,t),miss=canMiss(c.held,c.present,t),need=needAttend(c.held,c.present,t);const tr=document.createElement('tr');tr.innerHTML=`<td><div class="subject-name">${s.name}</div><div class="sub" style="font-size:10px">${s.code}</div></td><td>${c.held}</td><td>${c.present}</td><td>${c.absent}</td><td><span class="ring" style="--deg:${Math.min(c.pct,100)*3.6}deg"><b>${Math.round(c.pct)}%</b></span><b>${c.pct.toFixed(1)}%</b><div class="progress"><span style="width:${Math.min(c.pct,100)}%"></span></div></td><td><select onchange="setTarget('${s.id}',this.value)">${[65,70,75,80,85,90,95].map(x=>`<option value="${x}" ${x===t?'selected':''}>${x}</option>`).join('')}</select>%</td><td><span class="badge ${cls}">${label}</span></td><td>${miss}</td><td>${need}</td>`;body.appendChild(tr)});animateNumber(document.getElementById('held'),h,0);
+document.getElementById('streakNote').textContent=h?`${h} class${h===1?'':'es'} tracked`:'Start marking attendance';
+animateNumber(document.getElementById('present'),p,0);animateNumber(document.getElementById('absent'),h-p,0);const pct=h?p/h*100:0;animateNumber(document.getElementById('overall'),pct,1,'%');document.getElementById('overallNote').textContent=`Overall target 75% • ${pct>=75?'On target':'Below target'}`;const ranked=subjects.map(s=>({s,c:recordCount(s.id)})).filter(x=>x.c.held).sort((a,b)=>b.c.pct-a.c.pct);document.getElementById('bestNote').textContent=ranked.length?`Best: ${ranked[0].s.name.split(' ')[0]} ${ranked[0].c.pct.toFixed(0)}%`:'—';const risky=subjects.filter(s=>{const c=recordCount(s.id);return c.held&&c.pct<(data.targets[s.id]||75)});document.getElementById('riskNote').textContent=risky.length?`${risky.length} subject${risky.length>1?'s':''} below target`:'No risk alerts';renderSummaryCalendar();renderAlerts()}
 function renderAlerts(){const box=document.getElementById('alerts');const arr=subjects.map(s=>{const c=recordCount(s.id),t=data.targets[s.id]||75;return{s,c,t}}).filter(x=>x.c.held);if(!arr.length){box.innerHTML='<div class="alert good"><strong>Ready</strong><span>Mark your first class to start tracking.</span></div>';return}const alerts=[];arr.filter(x=>x.c.pct<x.t).sort((a,b)=>a.c.pct-b.c.pct).slice(0,2).forEach(x=>alerts.push(`<div class="alert bad"><strong>${x.s.name}: ${x.c.pct.toFixed(1)}%</strong><span>Need ${needAttend(x.c.held,x.c.present,x.t)} consecutive attended classes to reach ${x.t}%.</span></div>`));arr.filter(x=>x.c.pct>=x.t&&x.c.pct<x.t+5).slice(0,2).forEach(x=>alerts.push(`<div class="alert warn"><strong>${x.s.name}: watch zone</strong><span>You can miss ${canMiss(x.c.held,x.c.present,x.t)} more and stay at ${x.t}% or above.</span></div>`));if(!alerts.length)alerts.push('<div class="alert good"><strong>Everything looks good</strong><span>No subject is currently below its target.</span></div>');box.innerHTML=alerts.join('')}
 function setTarget(id,v){data.targets[id]=Number(v);save();showToast('Target updated')}
+function animateNumber(el,end,decimals,suffix){
+ if(!el)return;
+ suffix=suffix||'';
+ const start=parseFloat(el.dataset.rawValue)||0;
+ const t0=performance.now(),dur=550;
+ if(el._raf)cancelAnimationFrame(el._raf);
+ function step(t){
+  const p=Math.min(1,(t-t0)/dur),eased=1-Math.pow(1-p,3),val=start+(end-start)*eased;
+  el.textContent=val.toFixed(decimals)+suffix;
+  if(p<1){el._raf=requestAnimationFrame(step)}else{el.textContent=end.toFixed(decimals)+suffix;el.dataset.rawValue=end}
+ }
+ el._raf=requestAnimationFrame(step);
+}
 function dayName(date){return new Date(date+'T00:00:00').toLocaleDateString('en-US',{weekday:'long'})}
 function classKey(date,c){return `${date}_${c[3]}_${c[4]}`}
 function loadDay(){
@@ -344,6 +394,7 @@ function loadDay(){
         <button type="button" class="status-btn absent ${existing?.status==='A'?'active':''}" data-action="mark" data-status="A" ${existing?'disabled':''}>× Absent</button>
         
       </div>
+      ${existing?`<button type="button" class="icon-btn undo-row-btn" data-action="undo" title="Undo this mark">↺</button>`:''}
       <span class="attendance-status ${existing?(existing.status==='P'?'is-present':'is-absent'):'is-none'}">
         <span class="status-dot"></span><span>${existing?(existing.status==='P'?'Present':'Absent'):'Not marked'}</span>
       </span>
@@ -363,9 +414,35 @@ function mark(key,subject,status,day,session){
  const record={subject,status,date:key.split('_')[0],day,session};
  data.records[key]=record;
  queueOrSync({op:'upsert',record});
+ undoStack=undoStack.filter(x=>x.key!==key);
+ undoStack.push({key,record});
+ if(undoStack.length>25)undoStack.shift();
  save(false);
  renderAll();
- showToast(status==='P'?'Marked present':'Marked absent',status==='P'?'✓':'×');
+ showToast(status==='P'?'Marked present':'Marked absent',status==='P'?'✓':'×','Undo',()=>undoMark(key));
+}
+
+function undoMark(key,silent){
+ const record=data.records[key];
+ if(!record){ if(!silent) showToast('Nothing to undo for this class','!'); return; }
+ delete data.records[key];
+ queueOrSync({op:'delete',record});
+ undoStack=undoStack.filter(x=>x.key!==key);
+ save(false);
+ renderAll();
+ if(!silent) showToast('Undo successful — mark removed','↺');
+}
+
+function undoLast(){
+ if(!undoStack.length){ showToast('Nothing to undo','!'); return; }
+ const last=undoStack[undoStack.length-1];
+ undoMark(last.key);
+}
+
+function updateUndoLastButton(){
+ const btn=document.getElementById('undoLastBtn');
+ if(!btn)return;
+ btn.disabled=!undoStack.length;
 }
 
 function resetAttendance(){
@@ -374,6 +451,7 @@ function resetAttendance(){
  const oldRecords={...data.records};
  data.records={};
  pendingOps=[];
+ undoStack=[];
  localStorage.removeItem('attendanceLastAction');
  localStorage.removeItem('attendancePending');
  localStorage.setItem('attendanceTracker',JSON.stringify(data));
@@ -431,10 +509,12 @@ function changeMonth(n){calendarDate=new Date(calendarDate.getFullYear(),calenda
 function renderCalendar(){const box=document.getElementById('calendar'),title=document.getElementById('calendarTitle');if(!box)return;const y=calendarDate.getFullYear(),m=calendarDate.getMonth();title.textContent=new Date(y,m,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});box.innerHTML=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="cal-label">${x}</div>`).join('');const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();for(let i=0;i<first;i++)box.innerHTML+=`<div class="cal-day muted"><div class="num">${prev-first+i+1}</div></div>`;for(let d=1;d<=days;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,arr=Object.values(data.records).filter(r=>r.date===ds),pp=arr.filter(r=>r.status==='P').length,aa=arr.filter(r=>r.status==='A').length,today=ds===new Date().toISOString().slice(0,10);box.innerHTML+=`<div class="cal-day ${today?'today':''}" onclick="jumpToDate('${ds}')"><div class="num">${d}</div><div class="marks"><span class="p">${pp?'● '+pp:''}</span> <span class="a">${aa?'● '+aa:''}</span></div></div>`}while(box.children.length%7)box.innerHTML+='<div class="cal-day muted"></div>'}
 function jumpToDate(ds){document.getElementById('datePicker').value=ds;const btn=[...document.querySelectorAll('.tab')].find(x=>x.textContent.includes('Mark'));showTab('daily',btn);loadDay()}
 function renderHistory(){const list=document.getElementById('historyList'),arr=Object.values(data.records).sort((a,b)=>b.date.localeCompare(a.date)||(a.session||'').localeCompare(b.session||''));if(!arr.length){list.innerHTML='<div class="empty">No attendance history yet.</div>';return}list.innerHTML=arr.map(r=>`<div class="history-row"><span class="date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</span><span><b>${subjectById(normalizeSubject(r.subject))?.name||r.subject}</b><br><span style="color:var(--muted);font-size:10px">${r.session||'Class'}</span></span><span class="badge ${r.status==='P'?'good':'bad'}">${r.status==='P'?'Present':'Absent'}</span></div>`).join('')}
-function renderAll(){renderSummary();loadDay();if(document.getElementById('history').classList.contains('active')){drawTrend();renderCalendar();renderHistory()}document.getElementById('savedAt')?.remove()}
+function renderAll(){renderSummary();loadDay();updateUndoLastButton();if(document.getElementById('history').classList.contains('active')){drawTrend();renderCalendar();renderHistory()}document.getElementById('savedAt')?.remove()}
 function updateOffline(){const b=document.getElementById('offlineBanner');b.classList.toggle('show',!navigator.onLine);if(!navigator.onLine)setCloudStatus('offline','Offline');else if(currentUser&&cloudReady)flushPending()}
 window.addEventListener('online',updateOffline);window.addEventListener('offline',updateOffline);window.addEventListener('resize',()=>{if(document.getElementById('history').classList.contains('active'))drawTrend()});window.addEventListener('keydown',e=>{if(e.target.matches('input,select,textarea'))return;if(e.key.toLowerCase()==='u')undoLast();if(e.key.toLowerCase()==='d')toggleDark()});
 document.getElementById('greeting').textContent=`${greeting()} • CSE (AI, ML & Robotics) • 2026–27 Odd Semester`;document.body.classList.toggle('dark',data.theme==='dark');document.getElementById('themeBtn').textContent=data.theme==='dark'?'☀':'◐';
+const datePicker=document.getElementById('datePicker');
+datePicker.addEventListener('change',loadDay);
 const now=new Date();document.getElementById('datePicker').value=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);populatePlanner('planSubject');populatePlanner('planSubject2');renderSchedule();renderAll();updateOffline();
 (async()=>{const {data:{session}}=await supabaseClient.auth.getSession();if(session?.user)await onSignedIn(session.user);supabaseClient.auth.onAuthStateChange(async(_e,s)=>{if(s?.user&&!currentUser)await onSignedIn(s.user)})})();
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
@@ -550,6 +630,9 @@ document.getElementById('dayList')?.addEventListener('click',e=>{
    const date=document.getElementById('datePicker').value,day=dayName(date);
    const c=(timetable[day]||[]).find(x=>classKey(date,x)===key);
    if(c)mark(key,c[3],btn.dataset.status,day,c[4]);
+ }
+ if(btn.dataset.action==='undo'){
+   undoMark(key);
  }
 });
 
