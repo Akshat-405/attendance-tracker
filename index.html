@@ -406,6 +406,38 @@ function loadDay(){
 function renderSchedule(){const box=document.getElementById('schedule');box.innerHTML='';Object.entries(timetable).forEach(([day,classes])=>{const d=document.createElement('div');d.className='day';d.innerHTML=`<h3>${day}</h3>`;classes.forEach(c=>d.innerHTML+=`<div class="class"><div class="time">${c[0]}</div><div class="subject">${c[1]}</div><div class="type">${c[2]} • counts toward ${subjectById(c[3]).name}</div></div>`);box.appendChild(d)})}
 function showTab(id,btn){document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));btn.classList.add('active');if(id==='history'){drawTrend();renderCalendar();renderHistory()}if(id==='planner'){populatePlanner('planSubject2');const s=subjects[0];document.getElementById('planTarget2').value=data.targets[s.id];updatePlanner2()}}
 function toggleDark(){data.theme=data.theme==='dark'?'light':'dark';document.body.classList.toggle('dark',data.theme==='dark');localStorage.setItem('attendanceTracker',JSON.stringify(data));document.getElementById('themeBtn').textContent=data.theme==='dark'?'☀':'◐'}
+async function notifyAttendance(record,c){
+ if(!currentUser || !navigator.onLine) return;
+ try{
+   const times=String(c?.[0]||'').split('–').map(x=>x.trim());
+   const {data:result,error}=await supabaseClient.functions.invoke('attendance-notify',{
+     body:{
+       user_id:currentUser.id,
+       attendance_date:record.date,
+       subject_id:record.subject,
+       status:record.status,
+       day_of_week:record.day,
+       start_time:times[0]||'',
+       end_time:times[1]||''
+     }
+   });
+   if(error){
+     console.error('Telegram notification error:',error);
+     showToast('Attendance saved, but Telegram notification failed.','!');
+     return;
+   }
+   if(result?.error){
+     console.error('Telegram notification error:',result.error);
+     showToast('Attendance saved, but Telegram notification failed.','!');
+     return;
+   }
+   console.log('Telegram notification sent:',result);
+ }catch(error){
+   console.error('Telegram notification error:',error);
+   showToast('Attendance saved, but Telegram notification failed.','!');
+ }
+}
+
 function mark(key,subject,status,day,session){
  if(data.records[key]){
    showToast(`Already marked ${data.records[key].status==='P'?'present':'absent'}. This class is locked.`,'!');
@@ -420,6 +452,9 @@ function mark(key,subject,status,day,session){
  save(false);
  renderAll();
  showToast(status==='P'?'Marked present':'Marked absent',status==='P'?'✓':'×','Undo',()=>undoMark(key));
+
+ // Send Telegram notification after the attendance is marked.
+ notifyAttendance(record,(timetable[day]||[]).find(c=>classKey(record.date,c)===key));
 }
 
 function undoMark(key,silent){
