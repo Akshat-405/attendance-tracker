@@ -202,6 +202,27 @@ button:active{transform:translateY(0) scale(.97)}
 .theme-toggle{min-width:92px;height:42px;display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:12px;background:linear-gradient(135deg,rgba(91,92,240,.10),rgba(124,58,237,.08));border-color:rgba(91,92,240,.20);color:var(--text);font-size:11px;font-weight:850}
 .theme-toggle .theme-icon{font-size:16px;line-height:1}
 .theme-toggle:hover{background:linear-gradient(135deg,rgba(91,92,240,.16),rgba(124,58,237,.13));box-shadow:0 8px 20px rgba(91,92,240,.12)}
+
+/* ===== Summary table: clearly scrollable on narrow screens ===== */
+.summary-table-wrap{position:relative;overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:15px;background:var(--card);box-shadow:inset 0 0 0 1px rgba(120,130,170,.035),0 7px 20px rgba(20,30,55,.045);-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.summary-table-wrap::after{content:'Swipe →';position:absolute;right:10px;top:8px;padding:4px 7px;border-radius:999px;background:rgba(255,255,255,.9);border:1px solid var(--line);color:var(--muted);font-size:9px;font-weight:800;pointer-events:none;opacity:.9}
+.dark .summary-table-wrap::after{background:rgba(21,26,43,.92)}
+.summary-table-wrap table{width:100%;min-width:980px;border-collapse:separate;border-spacing:0}
+.summary-table-wrap th,.summary-table-wrap td{border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 10px;white-space:nowrap}
+.summary-table-wrap th:first-child,.summary-table-wrap td:first-child{border-left:0}
+.summary-table-wrap th:last-child,.summary-table-wrap td:last-child{border-right:0}
+.summary-table-wrap tbody tr:last-child td{border-bottom:0}
+.summary-table-wrap thead th{background:rgba(245,247,251,.92);border-top:0;position:sticky;top:0;z-index:2}
+.dark .summary-table-wrap thead th{background:rgba(21,26,43,.96)}
+.summary-table-wrap tbody tr{transition:background .16s ease}
+.summary-table-wrap tbody tr:hover{background:rgba(91,92,240,.035)}
+.summary-table-wrap th:first-child,.summary-table-wrap td:first-child{position:sticky;left:0;z-index:1;background:var(--card)}
+.summary-table-wrap thead th:first-child{z-index:3;background:rgba(245,247,251,.98)}
+.dark .summary-table-wrap thead th:first-child{background:rgba(21,26,43,.98)}
+.summary-table-wrap td:first-child{box-shadow:8px 0 12px -12px rgba(20,30,55,.35)}
+.summary-table-hint{display:flex;justify-content:flex-end;align-items:center;gap:5px;margin:7px 3px 0;color:var(--muted);font-size:10px;font-weight:700}
+.summary-table-hint span{display:inline-block;padding:3px 7px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.55)}
+.dark .summary-table-hint span{background:rgba(255,255,255,.04)}
 /* ===== Mobile UI refinement ===== */
 @media (max-width: 620px) {
   .container { padding: 12px 10px 28px; }
@@ -211,11 +232,11 @@ button:active{transform:translateY(0) scale(.97)}
   .identity { gap: 6px; margin-top: 8px; }
   .chip { font-size: 10px; padding: 6px 9px; }
 
-  .actions { width: 100%; display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: center; gap: 7px; }
-  .cloud { grid-column: 1; min-width: 0; justify-content: center; }
-  .user { grid-column: 1 / -1; width: 100%; max-width: none; min-width: 0; justify-content: flex-start; }
-  #signoutBtn { grid-column: 2; white-space: nowrap; }
-  #themeBtn { grid-column: 3; width: 42px; height: 42px; min-width: 42px; padding: 0; flex-shrink: 0; }
+  .actions { width: 100%; display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 7px; }
+  .cloud { grid-column: 1; grid-row: 1; min-width: 0; justify-content: center; white-space: nowrap; }
+  .user { grid-column: 2 / 4; grid-row: 1; width: 100%; max-width: none; min-width: 0; justify-content: flex-start; }
+  #signoutBtn { grid-column: 2; grid-row: 2; justify-self: end; white-space: nowrap; margin-top: 2px; }
+  #themeBtn { grid-column: 3; grid-row: 2; width: 42px; height: 42px; min-width: 42px; padding: 0; flex-shrink: 0; margin-top: 2px; }
   #themeBtn #themeLabel { display: none; }
   #themeBtn .theme-icon { font-size: 17px; }
 
@@ -312,7 +333,7 @@ button:active{transform:translateY(0) scale(.97)}
 <section id="summary" class="card section active">
  <div class="section-head"><div><h2>Attendance Overview</h2><p>Combined lecture + practical attendance for each course.</p></div></div>
  <div class="alert-grid" id="alerts"></div>
- <div style="overflow:auto"><table><thead><tr><th>Subject</th><th>Held</th><th>Present</th><th>Absent</th><th>Attendance</th><th>Target</th><th>Status</th><th>Can Miss</th><th>Need Attend</th></tr></thead><tbody id="summaryBody"></tbody></table></div>
+ <div class="summary-table-wrap"><table><thead><tr><th>Subject</th><th>Held</th><th>Present</th><th>Absent</th><th>Attendance</th><th>Target</th><th>Status</th><th>Can Miss</th><th>Need Attend</th></tr></thead><tbody id="summaryBody"></tbody></table></div><div class="summary-table-hint"><span>↔ Swipe horizontally to view all columns</span></div>
 
  <div class="summary-calendar-card">
    <div class="calendar-head">
