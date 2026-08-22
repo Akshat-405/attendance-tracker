@@ -403,6 +403,156 @@ button:active{transform:translateY(0) scale(.97)}
 .table-wrap td:nth-child(8),
 .table-wrap td:nth-child(9) { white-space: nowrap; }
 .table-wrap td:nth-child(5) { min-width: 160px; }
+
+/* ===== Final mobile + dark visual refinement ===== */
+:root{
+  --dark-bg:#0a0f1c;
+  --dark-card:#121a2a;
+  --dark-card-2:#172136;
+  --dark-line:#2a3650;
+  --dark-text:#f1f5ff;
+  --dark-muted:#9aa8bf;
+}
+body.dark{
+  background:
+    radial-gradient(circle at 8% 0%,rgba(91,92,240,.20),transparent 30%),
+    radial-gradient(circle at 95% 8%,rgba(124,58,237,.16),transparent 28%),
+    var(--dark-bg);
+  color:var(--dark-text);
+}
+body.dark .card,
+body.dark .summary-calendar-card,
+body.dark .result-card,
+body.dark .class,
+body.dark .cal-day,
+body.dark .field input,
+body.dark .field select,
+body.dark .table-wrap{
+  background:linear-gradient(145deg,var(--dark-card),#101827);
+  border-color:var(--dark-line);
+  color:var(--dark-text);
+}
+body.dark .chip,
+body.dark .user,
+body.dark button:not(.primary):not(.tab.active),
+body.dark .tabs{
+  background:#111a2b;
+  border-color:var(--dark-line);
+  color:var(--dark-text);
+}
+body.dark .cloud.online{background:#102b21;color:#69dfa0;border-color:#1d5a43}
+body.dark .erp{background:#171c3d;color:#aeb4ff;border-color:#303872}
+body.dark th{background:#121a2a;color:#9aa8bf}
+body.dark td{border-color:#2a3650}
+body.dark .table-wrap tbody tr:nth-child(even){background:rgba(255,255,255,.025)}
+body.dark .table-wrap tbody tr:hover{background:rgba(112,114,255,.10)}
+body.dark .table-wrap td:first-child,
+body.dark .table-wrap th:first-child{background:#121a2a}
+body.dark .table-wrap thead th{box-shadow:0 1px 0 #2a3650}
+body.dark .theme-toggle{
+  background:linear-gradient(135deg,#1c2344,#241b3d);
+  border-color:#424b78;
+  color:#f5f7ff;
+  box-shadow:0 8px 22px rgba(0,0,0,.22);
+}
+body.dark .theme-toggle:hover{background:linear-gradient(135deg,#242c52,#30234c)}
+body.dark .stat:after{background:rgba(130,140,255,.10)}
+body.dark .progress{background:#263149}
+body.dark .ring{background:conic-gradient(var(--ring,#7b7cff) var(--deg,0deg),#303a52 0)}
+body.dark .ring:after{background:#121a2a}
+body.dark .good{background:#102b20;color:#79e3a6}
+body.dark .warn{background:#302711;color:#ffd36a}
+body.dark .bad{background:#32171e;color:#ff8f9d}
+
+@media (max-width:620px){
+  .container{padding:12px 12px 30px}
+  .topbar{gap:10px}
+  .identity{gap:6px}
+  .actions{
+    width:100%;
+    display:grid;
+    grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+    gap:8px;
+    align-items:stretch;
+  }
+  .actions .cloud{
+    grid-column:1 / -1;
+    grid-row:1;
+    width:100%;
+    min-height:40px;
+    justify-content:center;
+  }
+  #signoutBtn{
+    grid-column:1;
+    grid-row:2;
+    width:100%;
+    height:46px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:800;
+  }
+  #themeBtn{
+    grid-column:2;
+    grid-row:2;
+    width:100%;
+    height:46px;
+    min-width:0;
+    border-radius:14px;
+    padding:0 14px;
+    font-size:13px;
+    font-weight:850;
+  }
+  #themeBtn .theme-icon{font-size:18px}
+
+  /* Clean horizontal table: no sticky first column on small screens. */
+  .table-wrap{
+    overflow-x:auto;
+    overflow-y:hidden;
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 5px 18px rgba(20,30,55,.06);
+    -webkit-overflow-scrolling:touch;
+    scrollbar-color:rgba(120,130,170,.45) transparent;
+  }
+  .table-wrap table{
+    width:905px;
+    min-width:905px;
+    table-layout:fixed;
+  }
+  .table-wrap th,.table-wrap td{
+    padding:12px 11px;
+    font-size:12px;
+    vertical-align:middle;
+  }
+  .table-wrap th{font-size:10px}
+  .table-wrap th:nth-child(1),.table-wrap td:nth-child(1){width:205px}
+  .table-wrap th:nth-child(2),.table-wrap td:nth-child(2){width:60px}
+  .table-wrap th:nth-child(3),.table-wrap td:nth-child(3){width:75px}
+  .table-wrap th:nth-child(4),.table-wrap td:nth-child(4){width:65px}
+  .table-wrap th:nth-child(5),.table-wrap td:nth-child(5){width:150px}
+  .table-wrap th:nth-child(6),.table-wrap td:nth-child(6){width:75px}
+  .table-wrap th:nth-child(7),.table-wrap td:nth-child(7){width:95px}
+  .table-wrap th:nth-child(8),.table-wrap td:nth-child(8){width:85px}
+  .table-wrap th:nth-child(9),.table-wrap td:nth-child(9){width:95px}
+  .table-wrap td:first-child,.table-wrap th:first-child{
+    position:static;
+    box-shadow:none;
+    border-right:1px solid var(--line);
+  }
+  .table-wrap .subject-name{white-space:normal;line-height:1.3;font-size:12px}
+  .table-wrap .sub{font-size:10px}
+  .table-wrap td:nth-child(5){overflow:visible;white-space:nowrap;min-width:0}
+  .table-wrap td:nth-child(5) .ring{width:38px;height:38px;margin-right:4px}
+  .table-wrap td:nth-child(5) .ring b{font-size:8px}
+  .table-wrap td:nth-child(5)>b{min-width:40px;font-size:11px}
+  .table-wrap td:nth-child(5) .progress{width:118px;min-width:118px;height:6px;margin-top:6px}
+  .table-wrap td:nth-child(6) select{width:52px;min-width:52px}
+  .table-scroll-hint{display:flex!important;margin-top:10px;font-size:10px}
+
+  /* Dark mode mobile cards stay separated and readable. */
+  body.dark .tabs{background:rgba(10,15,28,.94);border-color:#26324a}
+  body.dark .table-wrap{box-shadow:0 8px 24px rgba(0,0,0,.25)}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -432,10 +582,9 @@ button:active{transform:translateY(0) scale(.97)}
 
 <div class="container">
 <header class="topbar">
-  <div class="brand"><h1>Attendance Tracker</h1><div class="sub" id="greeting">CSE (AI, ML & Robotics) • 2026–27 Odd Semester</div><div class="identity"><span class="chip erp">ERP ID: 1000027235</span><span class="chip">Personal Attendance Record</span></div></div>
+  <div class="brand"><h1>Attendance Tracker</h1><div class="sub" id="greeting">CSE (AI, ML & Robotics) • 2026–27 Odd Semester</div><div class="identity"><span class="chip erp">ERP ID: 1000027235</span></div></div>
   <div class="actions">
-    <span class="cloud offline" id="cloudStatus">● Connecting…</span><span class="chip user" id="userChip" style="display:none"><span class="mail-icon">✉</span><span id="userEmail"></span></span>
-    <button id="signoutBtn" style="display:none" onclick="signOut()">Sign out</button><button class="theme-toggle" onclick="toggleDark()" title="Switch to dark mode" id="themeBtn"><span class="theme-icon" id="themeIcon">☾</span><span id="themeLabel">Dark</span></button>
+    <span class="cloud offline" id="cloudStatus">● Connecting…</span><button id="signoutBtn" style="display:none" onclick="signOut()">Sign out</button><button class="theme-toggle" onclick="toggleDark()" title="Switch to dark mode" id="themeBtn"><span class="theme-icon" id="themeIcon">☾</span><span id="themeLabel">Dark</span></button>
   </div>
 </header>
 <div class="offline-banner" id="offlineBanner">Offline mode: attendance is saved on this device and will sync automatically when you reconnect.</div>
@@ -748,8 +897,8 @@ async function pullCloud(){
  setCloudStatus('online',pendingOps.length?'Sync pending':'Cloud synced');
 }
 async function signIn(){const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value,btn=document.getElementById('authSubmit');if(!email||!password){document.getElementById('authError').textContent='Enter email and password.';return}btn.disabled=true;btn.textContent='Signing in…';const {data:res,error}=await supabaseClient.auth.signInWithPassword({email,password});if(error){document.getElementById('authError').textContent=error.message;btn.disabled=false;btn.textContent='Sign in & Sync';return}await onSignedIn(res.user);btn.disabled=false;btn.textContent='Sign in & Sync'}
-async function onSignedIn(user){currentUser=user;document.getElementById('authGate').style.display='none';document.getElementById('userChip').style.display='inline-flex';document.getElementById('userEmail').textContent=user.email||'Signed in';document.getElementById('signoutBtn').style.display='inline-block';cloudReady=true;await pullCloud()}
-async function signOut(){await supabaseClient.auth.signOut({scope:'local'});currentUser=null;cloudReady=false;document.getElementById('authGate').style.display='grid';document.getElementById('userChip').style.display='none';document.getElementById('signoutBtn').style.display='none';setCloudStatus('offline','Signed out')}
+async function onSignedIn(user){currentUser=user;document.getElementById('authGate').style.display='none';document.getElementById('signoutBtn').style.display='inline-block';cloudReady=true;await pullCloud()}
+async function signOut(){await supabaseClient.auth.signOut({scope:'local'});currentUser=null;cloudReady=false;document.getElementById('authGate').style.display='grid';document.getElementById('signoutBtn').style.display='none';setCloudStatus('offline','Signed out')}
 function drawTrend(){const canvas=document.getElementById('trendCanvas');if(!canvas)return;const ctx=canvas.getContext('2d'),rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1,w=rect.width||600,h=rect.height||280;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);const records=Object.values(data.records).sort((a,b)=>a.date.localeCompare(b.date));if(!records.length){ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--muted');ctx.font='14px system-ui';ctx.fillText('Mark attendance to see your trend.',20,40);return}let p=0,n=0,pts=[];records.forEach(r=>{n++;if(r.status==='P')p++;pts.push({date:r.date,pct:p/n*100})});const pad={l:42,r:16,t:15,b:30},cw=w-pad.l-pad.r,ch=h-pad.t-pad.b;ctx.strokeStyle=getComputedStyle(document.body).getPropertyValue('--line');ctx.lineWidth=1;[0,25,50,75,100].forEach(v=>{const y=pad.t+ch-(v/100)*ch;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--muted');ctx.font='10px system-ui';ctx.fillText(v+'%',6,y+3)});const y75=pad.t+ch-.75*ch;ctx.strokeStyle='#16a34a';ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(pad.l,y75);ctx.lineTo(w-pad.r,y75);ctx.stroke();ctx.setLineDash([]);ctx.strokeStyle='#5b5cf0';ctx.lineWidth=2.5;ctx.beginPath();pts.forEach((pt,i)=>{const x=pad.l+(pts.length===1?cw/2:i*cw/(pts.length-1)),y=pad.t+ch-(pt.pct/100)*ch;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();pts.forEach((pt,i)=>{if(i===pts.length-1||pts.length<8){const x=pad.l+(pts.length===1?cw/2:i*cw/(pts.length-1)),y=pad.t+ch-(pt.pct/100)*ch;ctx.fillStyle='#5b5cf0';ctx.beginPath();ctx.arc(x,y,3.5,0,Math.PI*2);ctx.fill()}})}
 function changeMonth(n){calendarDate=new Date(calendarDate.getFullYear(),calendarDate.getMonth()+n,1);renderCalendar()}
 function renderCalendar(){const box=document.getElementById('calendar'),title=document.getElementById('calendarTitle');if(!box)return;const y=calendarDate.getFullYear(),m=calendarDate.getMonth();title.textContent=new Date(y,m,1).toLocaleDateString('en-IN',{month:'long',year:'numeric'});box.innerHTML=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="cal-label">${x}</div>`).join('');const first=new Date(y,m,1).getDay(),days=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();for(let i=0;i<first;i++)box.innerHTML+=`<div class="cal-day muted"><div class="num">${prev-first+i+1}</div></div>`;for(let d=1;d<=days;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,arr=Object.values(data.records).filter(r=>r.date===ds),pp=arr.filter(r=>r.status==='P').length,aa=arr.filter(r=>r.status==='A').length,today=ds===new Date().toISOString().slice(0,10);box.innerHTML+=`<div class="cal-day ${today?'today':''}" onclick="jumpToDate('${ds}')"><div class="num">${d}</div><div class="marks"><span class="p">${pp?'● '+pp:''}</span> <span class="a">${aa?'● '+aa:''}</span></div></div>`}while(box.children.length%7)box.innerHTML+='<div class="cal-day muted"></div>'}
